@@ -1,5 +1,7 @@
 from fastapi import APIRouter
 
+from schemas import UserCreate
+
 router = APIRouter()
 
 
@@ -14,7 +16,7 @@ def get_user(user_id: int):
 
 
 @router.post("/users")
-def create_new_user():
+def create_new_user(user: UserCreate):
     pass
 
 

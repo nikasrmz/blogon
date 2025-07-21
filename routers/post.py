@@ -1,5 +1,7 @@
 from fastapi import APIRouter
 
+from schemas import PostCreate
+
 router = APIRouter()
 
 
@@ -14,7 +16,7 @@ def get_post(post_id: int):
 
 
 @router.post("/posts")
-def create_post():
+def create_post(post: PostCreate):
     pass
 
 

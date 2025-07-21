@@ -1,12 +1,10 @@
 from fastapi import APIRouter
 
-router = APIRouter()
+from schemas import UserLogIn
 
-@router.post("/register")
-def register():
-    pass
+router = APIRouter()
 
 
 @router.post("/login")
-def log_in():
+def log_in(cred: UserLogIn):
     pass
