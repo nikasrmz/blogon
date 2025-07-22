@@ -5,11 +5,6 @@ from schemas import UserCreate
 router = APIRouter()
 
 
-@router.get("/users")
-def get_all_users():
-    pass
-
-
 @router.get("/users/{user_id}")
 def get_user(user_id: int):
     pass

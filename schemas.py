@@ -13,11 +13,11 @@ class UserLogIn(BaseModel):
     password: str
 
 
-class PostCreate(BaseModel):
+class PostCreateUpdate(BaseModel):
 
     title: str
     content: str
-    category: str
+    published: bool = True
 
 
 

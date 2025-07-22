@@ -25,10 +25,8 @@ class Post(Base):
     title: Mapped[str] = mapped_column(nullable=False)
     content: Mapped[str] = mapped_column(Text)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"))
 
     user: Mapped["User"] = relationship(back_populates="posts")
-    category: Mapped["Category"] = relationship(back_populates="posts")
     tags: Mapped[list["Tag"]] = relationship(secondary="post_tag", back_populates="posts")
     comments: Mapped[list["Post"]] = relationship(back_populates="post")
 
@@ -44,15 +42,6 @@ class Comment(Base):
 
     post: Mapped["Post"] = relationship(back_populates="comments")
     user: Mapped["User"] = relationship(back_populates="comments")
-
-
-class Category(Base):
-
-    __tablename__ = "categories"
-
-    name: Mapped[str] = mapped_column(unique=True)
-
-    posts: Mapped["Post"] = relationship(back_populates="category")
 
 
 class Tag(Base):
