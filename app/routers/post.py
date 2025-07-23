@@ -1,73 +1,79 @@
 from fastapi import APIRouter, Response, status, HTTPException
 from random import randint
+from sqlalchemy import text
 
-from schemas import PostCreateUpdate
-from database.dummy import posts
+from app.schemas import PostCreateUpdate
+from app.database.db import engine
 
+conn = engine.connect()
 
 router = APIRouter()
 
-
-def find_post_index(id: int) -> int:
-    for idx, post in enumerate(posts):
-        if post["id"] == id:
-            return idx
-
-
-
 @router.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_post(post: PostCreateUpdate):
-    post_dict = post.model_dump()
-    post_dict["id"] = randint(1, 10_000_000)
-    posts.append(post_dict)
-    return {"data": post_dict}
+    post = conn.execute(
+        text("insert into posts (title, content, published) values (:title, :content, :published) returning *"),
+        {"title": post.title, "content": post.content, "published": post.published},
+    ).mappings().fetchone()
+    conn.commit()
+    return {"created": dict(post)}
 
 
 @router.get("/posts")
 def get_all_posts():
+    result = conn.execute(text("select * from posts")).mappings().fetchall()
+    posts = [dict(row) for row in result]
     return {"data": posts}
 
 
 @router.get("/posts/{id}")
 def get_post(id: int):
-    idx = find_post_index(id)
+    post = conn.execute(
+        text("""select * from posts where id = :id"""),
+        {"id": id},
+    ).mappings().fetchone()
 
-    if not idx:
+    if not post:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"post with id: {id} not found",
         )
     
-    return {"data": posts[idx]}
+    return {"data": dict(post)}
 
 
 @router.put("/posts/{id}")
 def update_post(id: int, post: PostCreateUpdate):
-    idx = find_post_index(id)
+    post = conn.execute(
+        text("""update posts set title = :title, content = :content, published = :published where id = :id returning *"""),
+        {"title": post.title, "content": post.content, "published": post.published, "id": id},
+        ).mappings().fetchone()
+    
+    conn.commit()
 
-    if not idx:
+    if not post:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"post with id: {id} not found",
         )
 
-    del posts[idx]
-    post_dict = post.model_dump()
-    post_dict["id"] = id
-    posts.append(post_dict)
-    return {"data": f"post with id: {id} updated"}
+    return {"updated": dict(post)}
     
 
 @router.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int):
-    idx = find_post_index(id)
+    post = conn.execute(
+        text("""delete from posts where id = :id returning *"""),
+        {"id": id},
+        ).mappings().fetchone()
+    
+    conn.commit()
 
-    if not idx:
+    if not post:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"post with id: {id} not found",
         )
 
-    del posts[idx]
-    return {"detail": f"post with id: {id} deleted"}
+    return {"deleted post": dict(post)}
     

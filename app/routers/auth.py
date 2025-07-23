@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from schemas import UserLogIn
+from app.schemas import UserLogIn
 
 router = APIRouter()
 

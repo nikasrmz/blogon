@@ -1,5 +1,7 @@
+from datetime import datetime
+
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship, sessionmaker
-from sqlalchemy import String, Text, ForeignKey, create_engine
+from sqlalchemy import Text, ForeignKey, create_engine, func
 
 
 class Base(DeclarativeBase):
@@ -13,6 +15,9 @@ class User(Base):
 
     username: Mapped[str] = mapped_column(unique=True)
     email: Mapped[str] = mapped_column(unique=True)
+    create_date: Mapped[datetime] = mapped_column(
+        server_default=func.current_timestamp(), nullable=False
+    )
 
     posts: Mapped[list["Post"]] = relationship(back_populates="user")
     Comments: Mapped[list["Comment"]] = relationship(back_populates="user")
@@ -24,7 +29,12 @@ class Post(Base):
     
     title: Mapped[str] = mapped_column(nullable=False)
     content: Mapped[str] = mapped_column(Text)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    published: Mapped[bool] = mapped_column(default=True)
+    # user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+
+    create_date: Mapped[datetime] = mapped_column(
+        server_default=func.current_timestamp(), nullable=False
+    )
 
     user: Mapped["User"] = relationship(back_populates="posts")
     tags: Mapped[list["Tag"]] = relationship(secondary="post_tag", back_populates="posts")
@@ -39,6 +49,9 @@ class Comment(Base):
     content: Mapped[str] = mapped_column(nullable=False)
     post_id: Mapped[int] = mapped_column(ForeignKey("posts.id"))
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    create_date: Mapped[datetime] = mapped_column(
+        server_default=func.current_timestamp(), nullable=False
+    )
 
     post: Mapped["Post"] = relationship(back_populates="comments")
     user: Mapped["User"] = relationship(back_populates="comments")
@@ -48,7 +61,10 @@ class Tag(Base):
 
     __tablename__ = "tags"
 
-    name: Mapped[str] = mapped_column(unique=True)\
+    name: Mapped[str] = mapped_column(unique=True)
+    create_date: Mapped[datetime] = mapped_column(
+        server_default=func.current_timestamp(), nullable=False
+    )
     
     posts: Mapped[list["Post"]] = relationship(secondary="post_tag", back_populates="tags")
 
