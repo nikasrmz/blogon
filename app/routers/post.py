@@ -1,37 +1,39 @@
-from fastapi import APIRouter, Response, status, HTTPException
-from random import randint
-from sqlalchemy import text
+from typing import List
 
-from app.schemas import PostCreateUpdate
-from app.database.db import engine
+from fastapi import APIRouter, status, HTTPException, Depends
+from sqlalchemy.orm import Session
 
-conn = engine.connect()
+from app.schemas import PostCreateUpdate, PostResponse
+from app.database.db import get_db
+from app.database.models import PostModel
+
+conn = None
 
 router = APIRouter()
 
-@router.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_post(post: PostCreateUpdate):
-    post = conn.execute(
-        text("insert into posts (title, content, published) values (:title, :content, :published) returning *"),
-        {"title": post.title, "content": post.content, "published": post.published},
-    ).mappings().fetchone()
-    conn.commit()
-    return {"created": dict(post)}
+@router.post("/posts", status_code=status.HTTP_201_CREATED, response_model=PostResponse)
+def create_post(post: PostCreateUpdate, db: Session = Depends(get_db)):
+
+    new_post = PostModel(**post.model_dump())
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
+
+    return new_post
 
 
-@router.get("/posts")
-def get_all_posts():
-    result = conn.execute(text("select * from posts")).mappings().fetchall()
-    posts = [dict(row) for row in result]
-    return {"data": posts}
+@router.get("/posts", response_model=List[PostResponse])
+def get_all_posts(db: Session = Depends(get_db)):
+
+    posts = db.query(PostModel).all()
+
+    return posts
 
 
-@router.get("/posts/{id}")
-def get_post(id: int):
-    post = conn.execute(
-        text("""select * from posts where id = :id"""),
-        {"id": id},
-    ).mappings().fetchone()
+@router.get("/posts/{id}", response_model=PostResponse)
+def get_post(id: int, db: Session = Depends(get_db)):
+
+    post = db.query(PostModel).filter(PostModel.id == id).first()
 
     if not post:
         raise HTTPException(
@@ -39,41 +41,38 @@ def get_post(id: int):
             detail=f"post with id: {id} not found",
         )
     
-    return {"data": dict(post)}
+    return post
 
 
-@router.put("/posts/{id}")
-def update_post(id: int, post: PostCreateUpdate):
-    post = conn.execute(
-        text("""update posts set title = :title, content = :content, published = :published where id = :id returning *"""),
-        {"title": post.title, "content": post.content, "published": post.published, "id": id},
-        ).mappings().fetchone()
-    
-    conn.commit()
+@router.put("/posts/{id}", response_model=PostResponse)
+def update_post(id: int, post: PostCreateUpdate, db: Session = Depends(get_db)):
 
-    if not post:
+    post_query = db.query(PostModel).filter(PostModel.id == id)
+
+    if not post_query.first():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"post with id: {id} not found",
         )
+    
+    post_query.update(post.model_dump())
+    db.commit()
 
-    return {"updated": dict(post)}
+
+    return post_query.first()
     
 
 @router.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int):
-    post = conn.execute(
-        text("""delete from posts where id = :id returning *"""),
-        {"id": id},
-        ).mappings().fetchone()
-    
-    conn.commit()
+def delete_post(id: int, db: Session = Depends(get_db)):
 
-    if not post:
+    post_query = db.query(PostModel).filter(PostModel.id == id)
+
+    if not post_query.first():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"post with id: {id} not found",
         )
-
-    return {"deleted post": dict(post)}
+    
+    post_query.delete()
+    db.commit()
     

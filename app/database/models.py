@@ -4,84 +4,84 @@ from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship,
 from sqlalchemy import Text, ForeignKey, create_engine, func
 
 
-class Base(DeclarativeBase):
+class BaseModel(DeclarativeBase):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
 
-class User(Base):
-
-    __tablename__ = "users"
-
-    username: Mapped[str] = mapped_column(unique=True)
-    email: Mapped[str] = mapped_column(unique=True)
-    create_date: Mapped[datetime] = mapped_column(
-        server_default=func.current_timestamp(), nullable=False
-    )
-
-    posts: Mapped[list["Post"]] = relationship(back_populates="user")
-    Comments: Mapped[list["Comment"]] = relationship(back_populates="user")
-
-
-class Post(Base):
+class PostModel(BaseModel):
 
     __tablename__ = "posts"
     
     title: Mapped[str] = mapped_column(nullable=False)
     content: Mapped[str] = mapped_column(Text)
-    published: Mapped[bool] = mapped_column(default=True)
+    published: Mapped[bool] = mapped_column(server_default="TRUE")
     # user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
 
     create_date: Mapped[datetime] = mapped_column(
         server_default=func.current_timestamp(), nullable=False
     )
 
-    user: Mapped["User"] = relationship(back_populates="posts")
-    tags: Mapped[list["Tag"]] = relationship(secondary="post_tag", back_populates="posts")
-    comments: Mapped[list["Post"]] = relationship(back_populates="post")
+    # user: Mapped["User"] = relationship(back_populates="posts")
+    # tags: Mapped[list["Tag"]] = relationship(secondary="post_tag", back_populates="posts")
+    # comments: Mapped[list["Post"]] = relationship(back_populates="post")
 
 
+class UserModel(BaseModel):
 
-class Comment(Base):
-    
-    __tablename__ = "comments"
+    __tablename__ = "users"
 
-    content: Mapped[str] = mapped_column(nullable=False)
-    post_id: Mapped[int] = mapped_column(ForeignKey("posts.id"))
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    username: Mapped[str] = mapped_column(nullable=False, unique=True)
+    email: Mapped[str] = mapped_column(nullable=False, unique=True)
+    password: Mapped[str] = mapped_column(nullable=False)
     create_date: Mapped[datetime] = mapped_column(
         server_default=func.current_timestamp(), nullable=False
     )
 
-    post: Mapped["Post"] = relationship(back_populates="comments")
-    user: Mapped["User"] = relationship(back_populates="comments")
+#     posts: Mapped[list["Post"]] = relationship(back_populates="user")
+#     Comments: Mapped[list["Comment"]] = relationship(back_populates="user")
 
 
-class Tag(Base):
-
-    __tablename__ = "tags"
-
-    name: Mapped[str] = mapped_column(unique=True)
-    create_date: Mapped[datetime] = mapped_column(
-        server_default=func.current_timestamp(), nullable=False
-    )
+# class Comment(Base):
     
-    posts: Mapped[list["Post"]] = relationship(secondary="post_tag", back_populates="tags")
+#     __tablename__ = "comments"
+
+#     content: Mapped[str] = mapped_column(nullable=False)
+#     post_id: Mapped[int] = mapped_column(ForeignKey("posts.id"))
+#     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+#     create_date: Mapped[datetime] = mapped_column(
+#         server_default=func.current_timestamp(), nullable=False
+#     )
+
+#     post: Mapped["Post"] = relationship(back_populates="comments")
+#     user: Mapped["User"] = relationship(back_populates="comments")
 
 
-class PostTag(Base):
+# class Tag(Base):
 
-    __tablename__ = "post_tag"
+#     __tablename__ = "tags"
 
-    post_id = ForeignKey("posts.id")
-    tag_id = ForeignKey("tags.id")
-
-
-def get_session():
-    engine = create_engine("sqlite:///blogon.db")
-    Base.metadata.create_all(engine)
-    Session = sessionmaker(bind=engine)
-    return Session()
+#     name: Mapped[str] = mapped_column(unique=True)
+#     create_date: Mapped[datetime] = mapped_column(
+#         server_default=func.current_timestamp(), nullable=False
+#     )
+    
+#     posts: Mapped[list["Post"]] = relationship(secondary="post_tag", back_populates="tags")
 
 
-session = get_session()
+# class PostTag(Base):
+
+#     __tablename__ = "post_tag"
+
+#     post_id = ForeignKey("posts.id")
+#     tag_id = ForeignKey("tags.id")
+
+
+# def get_session():
+#     engine = create_engine("sqlite:///blogon.db")
+#     Base.metadata.create_all(engine)
+#     Session = sessionmaker(bind=engine)
+#     return Session()
+
+
+# session = get_session()
