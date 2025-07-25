@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 
 class PostBase(BaseModel):
@@ -22,7 +22,7 @@ class PostResponse(PostBase):
 
 class UserBase(BaseModel):
     username: str
-    email: str
+    email: EmailStr
 
 
 class UserCreateUpdate(UserBase):
@@ -37,8 +37,11 @@ class UserResponse(UserBase):
         orm_mode = True
 
 
-class UserLogIn(BaseModel):
+class Token(BaseModel):
+    access_token: str
+    token_type: str
 
+
+class TokenData(BaseModel):
     username: str
-    password: str
 

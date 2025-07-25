@@ -9,9 +9,9 @@ from app.database.models import PostModel
 
 conn = None
 
-router = APIRouter()
+router = APIRouter(prefix="/posts", tags=["Posts"])
 
-@router.post("/posts", status_code=status.HTTP_201_CREATED, response_model=PostResponse)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=PostResponse)
 def create_post(post: PostCreateUpdate, db: Session = Depends(get_db)):
 
     new_post = PostModel(**post.model_dump())
@@ -22,7 +22,7 @@ def create_post(post: PostCreateUpdate, db: Session = Depends(get_db)):
     return new_post
 
 
-@router.get("/posts", response_model=List[PostResponse])
+@router.get("/", response_model=List[PostResponse])
 def get_all_posts(db: Session = Depends(get_db)):
 
     posts = db.query(PostModel).all()
@@ -30,7 +30,7 @@ def get_all_posts(db: Session = Depends(get_db)):
     return posts
 
 
-@router.get("/posts/{id}", response_model=PostResponse)
+@router.get("/{id}", response_model=PostResponse)
 def get_post(id: int, db: Session = Depends(get_db)):
 
     post = db.query(PostModel).filter(PostModel.id == id).first()
@@ -44,7 +44,7 @@ def get_post(id: int, db: Session = Depends(get_db)):
     return post
 
 
-@router.put("/posts/{id}", response_model=PostResponse)
+@router.put("/{id}", response_model=PostResponse)
 def update_post(id: int, post: PostCreateUpdate, db: Session = Depends(get_db)):
 
     post_query = db.query(PostModel).filter(PostModel.id == id)
@@ -62,7 +62,7 @@ def update_post(id: int, post: PostCreateUpdate, db: Session = Depends(get_db)):
     return post_query.first()
     
 
-@router.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int, db: Session = Depends(get_db)):
 
     post_query = db.query(PostModel).filter(PostModel.id == id)

@@ -1,16 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.utils import hash
 from app.database.db import get_db
 from app.database.models import UserModel
 from app.schemas import UserCreateUpdate, UserResponse
 
-router = APIRouter()
+
+router = APIRouter(prefix="/users", tags=["Users"])
 
 
-@router.post("/users", status_code=status.HTTP_201_CREATED, response_model=UserResponse)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=UserResponse)
 def create_new_user(user: UserCreateUpdate, db: Session = Depends(get_db)):
 
+    user.password = hash(user.password)
     new_user = UserModel(**user.model_dump())
     db.add(new_user)
     db.commit()
@@ -19,8 +22,9 @@ def create_new_user(user: UserCreateUpdate, db: Session = Depends(get_db)):
     return new_user
 
 
-@router.get("/users/{id}", response_model=UserResponse)
+@router.get("/{id}", response_model=UserResponse)
 def get_user(id: int, db: Session = Depends(get_db)):
+
     user = db.query(UserModel).filter(UserModel.id == id).first()
 
     if not user:
@@ -32,9 +36,10 @@ def get_user(id: int, db: Session = Depends(get_db)):
     return user
 
 
-
-@router.put("/users/{id}", response_model=UserResponse)
+@router.put("/{id}", response_model=UserResponse)
 def update_user(id: int, user: UserCreateUpdate, db: Session = Depends(get_db)):
+
+    user.password = hash(user.password)
     user_query = db.query(UserModel).filter(UserModel.id == id)
 
     if not user_query.first():
@@ -49,8 +54,9 @@ def update_user(id: int, user: UserCreateUpdate, db: Session = Depends(get_db)):
     return user_query.first()
 
 
-@router.delete("/users/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(id: int, db: Session = Depends(get_db)):
+
     user_query = db.query(UserModel).filter(UserModel.id == id)
 
     if not user_query.first():
