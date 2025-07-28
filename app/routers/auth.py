@@ -4,13 +4,14 @@ from sqlalchemy.orm import Session
 
 from oauth2 import create_access_token
 from app.utils import verify
+from app.schemas import Token
 from app.database.db import get_db
 from app.database.models import UserModel
 
 router = APIRouter(tags=["Authentication"])
 
 
-@router.post("/login")
+@router.post("/login", response_model=Token)
 def login(credentials: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(UserModel).filter(credentials.username == UserModel.username).first()
 

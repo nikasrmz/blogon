@@ -3,18 +3,23 @@ from typing import List
 from fastapi import APIRouter, status, HTTPException, Depends
 from sqlalchemy.orm import Session
 
-from app.schemas import PostCreateUpdate, PostResponse
+from app.schemas import PostCreateUpdate, PostResponse, TokenData
 from app.database.db import get_db
 from app.database.models import PostModel
+from oauth2 import get_current_user
 
-conn = None
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
-@router.post("/", status_code=status.HTTP_201_CREATED, response_model=PostResponse)
-def create_post(post: PostCreateUpdate, db: Session = Depends(get_db)):
 
-    new_post = PostModel(**post.model_dump())
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=PostResponse)
+def create_post(
+    post: PostCreateUpdate,
+    db: Session = Depends(get_db), 
+    user_id: TokenData = Depends(get_current_user),
+):
+
+    new_post = PostModel(**post.model_dump(), user_id=user_id.id)
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
@@ -45,7 +50,12 @@ def get_post(id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{id}", response_model=PostResponse)
-def update_post(id: int, post: PostCreateUpdate, db: Session = Depends(get_db)):
+def update_post(
+    id: int,
+    post: PostCreateUpdate, 
+    db: Session = Depends(get_db), 
+    user_id: int = Depends(get_current_user)
+):
 
     post_query = db.query(PostModel).filter(PostModel.id == id)
 
@@ -63,7 +73,11 @@ def update_post(id: int, post: PostCreateUpdate, db: Session = Depends(get_db)):
     
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int, db: Session = Depends(get_db)):
+def delete_post(
+    id: int, 
+    db: Session = Depends(get_db), 
+    user_id: int = Depends(get_current_user)
+):
 
     post_query = db.query(PostModel).filter(PostModel.id == id)
 

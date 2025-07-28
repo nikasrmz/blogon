@@ -16,6 +16,7 @@ class PostCreateUpdate(PostBase):
 class PostResponse(PostBase):
     id: int
     create_date: datetime
+    user_id: int
 
     class Config:
         orm_mode = True
@@ -44,5 +45,5 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    id: Optional[str]
+    id: Optional[int]
 

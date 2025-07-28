@@ -16,13 +16,13 @@ class PostModel(BaseModel):
     title: Mapped[str] = mapped_column(nullable=False)
     content: Mapped[str] = mapped_column(Text)
     published: Mapped[bool] = mapped_column(server_default="TRUE")
-    # user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
 
     create_date: Mapped[datetime] = mapped_column(
         server_default=func.current_timestamp(), nullable=False
     )
 
-    # user: Mapped["User"] = relationship(back_populates="posts")
+    user: Mapped["UserModel"] = relationship(back_populates="posts")
     # tags: Mapped[list["Tag"]] = relationship(secondary="post_tag", back_populates="posts")
     # comments: Mapped[list["Post"]] = relationship(back_populates="post")
 
@@ -38,7 +38,7 @@ class UserModel(BaseModel):
         server_default=func.current_timestamp(), nullable=False
     )
 
-#     posts: Mapped[list["Post"]] = relationship(back_populates="user")
+    posts: Mapped[list["PostModel"]] = relationship(back_populates="user")
 #     Comments: Mapped[list["Comment"]] = relationship(back_populates="user")
 
 
